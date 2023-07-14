@@ -37,7 +37,7 @@ const promotions = [
 ];
 
 users[0].favouritePromotions = [promotions[0]];
-users[1].favouritePromotions = [promotions];
+users[1].favouritePromotions = promotions;
 
 // Регистрация пользователя
 app.post("/registration", (req, res) => {
@@ -253,6 +253,7 @@ app.post("/promotions/:id/edit", (req, res) => {
 
     return p;
   })
+  res.status(200).json({ message: "Edit successful" });
   // Обновляем запись акции в таблице Promotions с новыми данными
 });
 
