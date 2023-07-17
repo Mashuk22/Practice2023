@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>API Test Page</title>
+  </head>
+  <body>
+    <h1>User Endpoints</h1>
+    <button onclick="registerUser()">Register User</button>
+    <button onclick="loginUser()">Login User</button>
+    <button onclick="getUserProfile()">Get User Profile</button>
+    <button onclick="getInProgressPromotions()">
+      Get In-Progress Promotions
+    </button>
+    <button onclick="getFavoritePromotions()">Get Favorite Promotions</button>
+
+    <h1>Seller Endpoints</h1>
+    <button onclick="registerSeller()">Register Seller</button>
+    <button onclick="loginSeller()">Login Seller</button>
+    <button onclick="getSellerProfile()">Get Seller Profile</button>
+    <button onclick="getSellerPromotions()">Get Seller Promotions</button>
+
+    <h1>Promotion Endpoints</h1>
+    <button onclick="getPromotionFeed()">Get Promotion Feed</button>
+    <button onclick="applyPromotionFilters()">Apply Promotion Filters</button>
+    <button onclick="sortPromotions()">Sort Promotions</button>
+    <button onclick="addPromotionToFavorites()">
+      Add Promotion to Favorites
+    </button>
+
+    <script>
+      // Function to send POST request
+      function postData(url, data) {
+        return fetch(`http://localhost:3000${url}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }).then((response) => response.json());
+      }
+
+      // Function to send GET request
+      function getData(url) {
+        return fetch(`http://localhost:3000${url}`).then((response) =>
+          response.json()
+        );
+      }
+
+      // Functions to test endpoints
+
+      function registerUser() {
+        const data = {
+          name: "John Doe",
+          email: "john@example.com",
+          oauthToken: "token123",
+        };
+        postData("/registration", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function loginUser() {
+        const data = {
+          email: "john@example.com",
+          oauthToken: "token123",
+        };
+        postData("/login", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getUserProfile() {
+        const userId = 1; // Modify userId as required
+        getData(`/user/profile?userId=${userId}`).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getInProgressPromotions() {
+        const userId = 1; // Modify userId as required
+        getData(`/user/in-progress?userId=${userId}`).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getFavoritePromotions() {
+        const userId = 1; // Modify userId as required
+        getData(`/user/favorite?userId=${userId}`).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function registerSeller() {
+        const data = {
+          company_name: "Seller Company",
+          email: "seller@example.com",
+          password: "password123",
+        };
+        postData("/seller/registration", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function loginSeller() {
+        const data = {
+          email: "seller@example.com",
+          password: "password123",
+        };
+        postData("/seller/login", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getSellerProfile() {
+        const sellerId = 1; // Modify sellerId as required
+        getData(`/seller/profile?sellerId=${sellerId}`).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getSellerPromotions() {
+        const sellerId = 1; // Modify sellerId as required
+        getData(`/seller/promotions?sellerId=${sellerId}`).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function getPromotionFeed() {
+        getData("/promotions/feed").then((response) => {
+          console.log(response);
+        });
+      }
+
+      function applyPromotionFilters() {
+        const data = {
+          filters: ["Filter 1", "Filter 2"],
+        };
+        postData("/promotions/filters", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function sortPromotions() {
+        const data = {
+          sortType: "Sort Type 1",
+        };
+        postData("/promotions/sort", data).then((response) => {
+          console.log(response);
+        });
+      }
+
+      function addPromotionToFavorites() {
+        const data = {
+          promotionId: 1,
+          userId: 1,
+        };
+        postData("/promotions/favorite", data).then((response) => {
+          console.log(response);
+        });
+      }
+    </script>
+  </body>
+</html>

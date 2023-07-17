@@ -2,6 +2,13 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
 // Добавляем промежуточное ПО для обработки данных в формате JSON
 app.use(bodyParser.json());
 
@@ -12,8 +19,18 @@ const users = [
 ];
 
 const sellers = [
-  { id: 1, company_name: "Company 1", email: "seller1@example.com", password: "password1" },
-  { id: 2, company_name: "User 2", email: "seller2@example.com", password: "password2" },
+  {
+    id: 1,
+    company_name: "Company 1",
+    email: "seller1@example.com",
+    password: "password1",
+  },
+  {
+    id: 2,
+    company_name: "User 2",
+    email: "seller2@example.com",
+    password: "password2",
+  },
 ];
 
 // Моковые данные акций
@@ -93,10 +110,10 @@ app.post("/promotions/sort", (req, res) => {
 // Добавление акции в избранное
 app.post("/promotions/favorite", (req, res) => {
   const promotionId = req.body.promotionId;
-  const userId = req.body.userId
+  const userId = req.body.userId;
 
-  const promotion = promotions.find(p => p.id === promotionId);
-  const user = users.find(u => u.id === userId);
+  const promotion = promotions.find((p) => p.id === promotionId);
+  const user = users.find((u) => u.id === parseInt(userId));
   user.favouritePromotions.push(promotion);
   res.status(200).json({ message: "Operation successful" });
 });
@@ -105,7 +122,8 @@ app.post("/promotions/favorite", (req, res) => {
 app.get("/promotions/:id", (req, res) => {
   const promotionId = req.params.id;
   // Получаем все данные об акции из таблицы Promotions и возвращаем их
-  const promotion = promotions.find(p => p.id === promotionId) || null;
+  const promotion =
+    promotions.find((p) => p.id === parseInt(promotionId)) || null;
   res.status(200).json(promotion);
 });
 
@@ -117,23 +135,25 @@ app.post("/promotions/:id/start", (req, res) => {
 
 // Получение информации о профиле пользователя
 app.get("/user/profile", (req, res) => {
-  const userId = req.body.userId;
+  const userId = req.query.userId;
   // Возвращаем данные пользователя из таблицы Users
-  const user = users.find(u => u.id === userId) || null;
+  const user = users.find((u) => u.id === parseInt(userId)) || null;
   res.status(200).json(user);
 });
 
 // Получение акций, которые проходит пользователь
 app.get("/user/in-progress", (req, res) => {
-  const userId = req.body.userId;
+  const userId = req.query.userId;
   // Возвращаем список акций, связанных с пользователем в таблице User_progress
+  const user = users.find((u) => u.id === parseInt(userId));
+  res.status(200).json(user.favouritePromotions);
 });
 
 // Получение избранных акций пользователя
 app.get("/user/favorite", (req, res) => {
-  const userId = req.body.userId;
+  const userId = req.query.userId;
   // Возвращаем список избранных акций, связанных с пользователем в таблице Favourite_promotions
-  const user = users.find(u => u.id === userId);
+  const user = users.find((u) => u.id === parseInt(userId));
   res.status(200).json(user.favouritePromotions);
 });
 
@@ -149,7 +169,7 @@ app.post("/logout", (req, res) => {
 
 // Регистрация продавца
 app.post("/seller/registration", (req, res) => {
-  const { company_name, email, password, } = req.body;
+  const { company_name, email, password } = req.body;
   const newSeller = { id: sellers.length + 1, company_name, email, password };
   sellers.push(newSeller);
   res.status(200).json({ message: "Registration successful" });
@@ -170,20 +190,15 @@ app.post("/seller/login", (req, res) => {
 
 // Создание акции
 app.post("/promotions/create", (req, res) => {
-  const {
-    seller_id,
-    title,
-    product_name,
-    description,
-    received_discount
-  } = req.body;
+  const { seller_id, title, product_name, description, received_discount } =
+    req.body;
   const newPromotion = {
     id: promotions.length + 1,
     seller_id,
     title,
     product_name,
     description,
-    received_discount
+    received_discount,
   };
   promotions.push(newPromotion);
   res.status(200).json(newPromotion);
@@ -191,10 +206,12 @@ app.post("/promotions/create", (req, res) => {
 
 // Получение списка акций продавца
 app.get("/seller/promotions", (req, res) => {
-  const { seller_id } = req.body;
+  const sellerId = req.query.sellerId;
+  console.log(sellerId);
   // Возвращаем список акций, связанных с продавцом, отсортированных в порядке добавления
-  const promotions = promotions.find(p => p.seller_id === seller_id);
-  res.status(200).json(promotions);
+  const sellerPromotions =
+    promotions.find((p) => p.seller_id === parseInt(sellerId)) || null;
+  res.status(200).json(sellerPromotions);
 });
 
 // Получение доступных фильтров для акций продавца
@@ -218,41 +235,39 @@ app.get("/seller/sort-types", (req, res) => {
 
 // Сортировка акций продавца
 app.post("/seller/sort", (req, res) => {
-  const { seller_id } = req.body;
+  const sellerId = req.query.sellerId;
   // Сортируем акции продавца согласно выбранному методу сортировки и возвращаем отсортированный список
-  const sortedPromotions = (promotions.find(p => p.seller_id === seller_id))
+  const sortedPromotions = promotions
+    .find((p) => p.seller_id === parseInt(sellerId))
     ?.sort((a, b) => a.id - b.id);
   res.status(200).json(sortedPromotions);
 });
 
 // Получение информации о профиле продавца
 app.get("/seller/profile", (req, res) => {
-  const { seller_id } = req.body;
+  const sellerId = req.query.sellerId;
   // Возвращаем данные продавца из таблицы Sellers
-  const seller = sellers.find(s => s.id === seller_id);
+  const seller = sellers.find((s) => s.id === parseInt(sellerId));
   res.status(200).json(seller);
 });
 
 // Редактирование акции
 app.post("/promotions/:id/edit", (req, res) => {
   const promotionId = req.params.id;
-  const { title,
-    product_name,
-    description,
-    received_discount } = req.body;
-  promotions.map(p => {
+  const { title, product_name, description, received_discount } = req.body;
+  promotions.map((p) => {
     if (p.id === promotionId) {
       return {
         id: p.id,
         title,
         product_name,
         description,
-        received_discount
-      }
+        received_discount,
+      };
     }
 
     return p;
-  })
+  });
   // Обновляем запись акции в таблице Promotions с новыми данными
 });
 
