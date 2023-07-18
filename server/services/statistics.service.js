@@ -1,5 +1,5 @@
 class StatisticsService {
-  static #statistics = {}
+  static #statistics = {};
 
   getUserStatistics(user) {
     return this.#statistics[user];
@@ -17,7 +17,9 @@ class StatisticsService {
     } else {
       this.#statistics[user] = [stat];
     }
+
+    console.log(this.#statistics[user]);
   }
 }
 
-export default StatisticsService;
+module.exports = StatisticsService;
