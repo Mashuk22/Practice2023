@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const StatisticsService = require("./services/statistics.service");
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
@@ -61,6 +62,9 @@ app.post("/registration", (req, res) => {
   const { name, email, oauthToken } = req.body;
   const newUser = { id: users.length + 1, name, email, oauthToken };
   users.push(newUser);
+
+  StatisticsService.addStatistics(newUser.id, "/registration", newUser);
+
   res.status(200).json({ message: "Registration successful" });
 });
 
@@ -70,6 +74,9 @@ app.post("/login", (req, res) => {
   const user = users.find(
     (user) => user.email === email && user.oauthToken === oauthToken
   );
+
+  StatisticsService.addStatistics(user.id, "/login", { email, oauthToken });
+
   if (user) {
     res.status(200).json({ message: "Login successful" });
   } else {
@@ -102,6 +109,8 @@ app.get("/promotions/sort-types", (req, res) => {
 // Сортировка акций
 app.post("/promotions/sort", (req, res) => {
   const selectedSortType = req.body.sortType;
+  const userId = req.body.userId;
+  StatisticsService.addStatistics(userId, "/promotions/sort", { selectedSortType });
   // Сортируем акции согласно выбранному методу сортировки и возвращаем отсортированный список
   const sortedPromotions = promotions.sort((a, b) => a.id - b.id);
   res.status(200).json(sortedPromotions);
@@ -111,6 +120,7 @@ app.post("/promotions/sort", (req, res) => {
 app.post("/promotions/favorite", (req, res) => {
   const promotionId = req.body.promotionId;
   const userId = req.body.userId;
+  StatisticsService.addStatistics(userId, "/promotions/favorite", { promotionId });
 
   const promotion = promotions.find((p) => p.id === promotionId);
   const user = users.find((u) => u.id === parseInt(userId));
@@ -130,12 +140,15 @@ app.get("/promotions/:id", (req, res) => {
 // Начало прохождения акции
 app.post("/promotions/:id/start", (req, res) => {
   const promotionId = req.params.id;
+  const userId = req.body.userId;
+  StatisticsService.addStatistics(userId, `/promotions/${promotionId}/start`, { promotionId });
   // Создаем запись в таблице User_progress для отслеживания прогресса пользователя
 });
 
 // Получение информации о профиле пользователя
 app.get("/user/profile", (req, res) => {
   const userId = req.query.userId;
+  StatisticsService.addStatistics(userId, "/user/profile", { userId });
   // Возвращаем данные пользователя из таблицы Users
   const user = users.find((u) => u.id === parseInt(userId)) || null;
   res.status(200).json(user);
@@ -144,6 +157,7 @@ app.get("/user/profile", (req, res) => {
 // Получение акций, которые проходит пользователь
 app.get("/user/in-progress", (req, res) => {
   const userId = req.query.userId;
+  StatisticsService.addStatistics(userId, "/user/in-progress", { userId });
   // Возвращаем список акций, связанных с пользователем в таблице User_progress
   const user = users.find((u) => u.id === parseInt(userId));
   res.status(200).json(user.favouritePromotions);
@@ -152,6 +166,7 @@ app.get("/user/in-progress", (req, res) => {
 // Получение избранных акций пользователя
 app.get("/user/favorite", (req, res) => {
   const userId = req.query.userId;
+  StatisticsService.addStatistics(userId, "/user/favorite", { userId });
   // Возвращаем список избранных акций, связанных с пользователем в таблице Favourite_promotions
   const user = users.find((u) => u.id === parseInt(userId));
   res.status(200).json(user.favouritePromotions);
@@ -164,13 +179,18 @@ app.get("/user/completed", (req, res) => {
 
 // Выход из аккаунта
 app.post("/logout", (req, res) => {
+  const userId = req.query.userId;
+  StatisticsService.addStatistics(userId, "/logout", { userId });
   // Удаляем текущую сессию пользователя
 });
 
 // Регистрация продавца
 app.post("/seller/registration", (req, res) => {
   const { company_name, email, password } = req.body;
+
   const newSeller = { id: sellers.length + 1, company_name, email, password };
+  StatisticsService.addStatistics(newSeller.id, "/seller/registration", { company_name, email, password });
+
   sellers.push(newSeller);
   res.status(200).json({ message: "Registration successful" });
 });
@@ -192,6 +212,7 @@ app.post("/seller/login", (req, res) => {
 app.post("/promotions/create", (req, res) => {
   const { seller_id, title, product_name, description, received_discount } =
     req.body;
+  StatisticsService.addStatistics(seller_id, "/promotions/create", { seller_id, title, product_name, description, received_discount });
   const newPromotion = {
     id: promotions.length + 1,
     seller_id,
@@ -207,7 +228,7 @@ app.post("/promotions/create", (req, res) => {
 // Получение списка акций продавца
 app.get("/seller/promotions", (req, res) => {
   const sellerId = req.query.sellerId;
-  console.log(sellerId);
+  StatisticsService.addStatistics(sellerId, "/seller/promotions", { sellerId });
   // Возвращаем список акций, связанных с продавцом, отсортированных в порядке добавления
   const sellerPromotions =
     promotions.find((p) => p.seller_id === parseInt(sellerId)) || null;
@@ -229,6 +250,8 @@ app.post("/seller/filters", (req, res) => {
 
 // Получение доступных методов сортировки акций продавца
 app.get("/seller/sort-types", (req, res) => {
+  const sellerId = req.query.sellerId;
+  StatisticsService.addStatistics(sellerId, "/seller/sort-types", { sellerId });
   // Возвращаем доступные методы сортировки акций продавца
   res.status(200).json({ sortTypes: ["Sort Type 1", "Sort Type 2"] });
 });
@@ -236,6 +259,7 @@ app.get("/seller/sort-types", (req, res) => {
 // Сортировка акций продавца
 app.post("/seller/sort", (req, res) => {
   const sellerId = req.query.sellerId;
+  StatisticsService.addStatistics(sellerId, "/seller/sort", { sellerId });
   // Сортируем акции продавца согласно выбранному методу сортировки и возвращаем отсортированный список
   const sortedPromotions = promotions
     .find((p) => p.seller_id === parseInt(sellerId))
@@ -246,6 +270,7 @@ app.post("/seller/sort", (req, res) => {
 // Получение информации о профиле продавца
 app.get("/seller/profile", (req, res) => {
   const sellerId = req.query.sellerId;
+  StatisticsService.addStatistics(sellerId, "/seller/profile", { sellerId });
   // Возвращаем данные продавца из таблицы Sellers
   const seller = sellers.find((s) => s.id === parseInt(sellerId));
   res.status(200).json(seller);
@@ -254,7 +279,9 @@ app.get("/seller/profile", (req, res) => {
 // Редактирование акции
 app.post("/promotions/:id/edit", (req, res) => {
   const promotionId = req.params.id;
+  const sellerId = req.body.sellerId;
   const { title, product_name, description, received_discount } = req.body;
+  StatisticsService.addStatistics(sellerId, `/promotions/${promotionId}/edit`, { title, product_name, description, received_discount });
   promotions.map((p) => {
     if (p.id === promotionId) {
       return {
@@ -274,6 +301,8 @@ app.post("/promotions/:id/edit", (req, res) => {
 
 // Выход из аккаунта продавца
 app.post("/logout", (req, res) => {
+  const sellerId = req.body.sellerId;
+  StatisticsService.addStatistics(sellerId, `/logout`, { sellerId });
   // Удаляем текущую сессию продавца
 });
 
