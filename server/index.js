@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const path = require("path");
 const bodyParser = require("body-parser");
 const StatisticsService = require("./services/statistics.service");
 
@@ -10,7 +11,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Добавляем промежуточное ПО для обработки данных в формате JSON
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, "public")));
+
+// Add body-parser middleware
 app.use(bodyParser.json());
 
 // Моковые данные пользователей
@@ -56,6 +60,10 @@ const promotions = [
 
 users[0].favouritePromotions = [promotions[0]];
 users[1].favouritePromotions = promotions;
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // Регистрация пользователя
 app.post("/registration", (req, res) => {
@@ -110,7 +118,9 @@ app.get("/promotions/sort-types", (req, res) => {
 app.post("/promotions/sort", (req, res) => {
   const selectedSortType = req.body.sortType;
   const userId = req.body.userId;
-  StatisticsService.addStatistics(userId, "/promotions/sort", { selectedSortType });
+  StatisticsService.addStatistics(userId, "/promotions/sort", {
+    selectedSortType,
+  });
   // Сортируем акции согласно выбранному методу сортировки и возвращаем отсортированный список
   const sortedPromotions = promotions.sort((a, b) => a.id - b.id);
   res.status(200).json(sortedPromotions);
@@ -120,7 +130,9 @@ app.post("/promotions/sort", (req, res) => {
 app.post("/promotions/favorite", (req, res) => {
   const promotionId = req.body.promotionId;
   const userId = req.body.userId;
-  StatisticsService.addStatistics(userId, "/promotions/favorite", { promotionId });
+  StatisticsService.addStatistics(userId, "/promotions/favorite", {
+    promotionId,
+  });
 
   const promotion = promotions.find((p) => p.id === promotionId);
   const user = users.find((u) => u.id === parseInt(userId));
@@ -141,7 +153,9 @@ app.get("/promotions/:id", (req, res) => {
 app.post("/promotions/:id/start", (req, res) => {
   const promotionId = req.params.id;
   const userId = req.body.userId;
-  StatisticsService.addStatistics(userId, `/promotions/${promotionId}/start`, { promotionId });
+  StatisticsService.addStatistics(userId, `/promotions/${promotionId}/start`, {
+    promotionId,
+  });
   // Создаем запись в таблице User_progress для отслеживания прогресса пользователя
 });
 
@@ -189,7 +203,11 @@ app.post("/seller/registration", (req, res) => {
   const { company_name, email, password } = req.body;
 
   const newSeller = { id: sellers.length + 1, company_name, email, password };
-  StatisticsService.addStatistics(newSeller.id, "/seller/registration", { company_name, email, password });
+  StatisticsService.addStatistics(newSeller.id, "/seller/registration", {
+    company_name,
+    email,
+    password,
+  });
 
   sellers.push(newSeller);
   res.status(200).json({ message: "Registration successful" });
@@ -212,7 +230,13 @@ app.post("/seller/login", (req, res) => {
 app.post("/promotions/create", (req, res) => {
   const { seller_id, title, product_name, description, received_discount } =
     req.body;
-  StatisticsService.addStatistics(seller_id, "/promotions/create", { seller_id, title, product_name, description, received_discount });
+  StatisticsService.addStatistics(seller_id, "/promotions/create", {
+    seller_id,
+    title,
+    product_name,
+    description,
+    received_discount,
+  });
   const newPromotion = {
     id: promotions.length + 1,
     seller_id,
@@ -281,7 +305,12 @@ app.post("/promotions/:id/edit", (req, res) => {
   const promotionId = req.params.id;
   const sellerId = req.body.sellerId;
   const { title, product_name, description, received_discount } = req.body;
-  StatisticsService.addStatistics(sellerId, `/promotions/${promotionId}/edit`, { title, product_name, description, received_discount });
+  StatisticsService.addStatistics(sellerId, `/promotions/${promotionId}/edit`, {
+    title,
+    product_name,
+    description,
+    received_discount,
+  });
   promotions.map((p) => {
     if (p.id === promotionId) {
       return {

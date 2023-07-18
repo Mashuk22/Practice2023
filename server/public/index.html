@@ -30,7 +30,7 @@
     <script>
       // Function to send POST request
       function postData(url, data) {
-        return fetch(`http://localhost:3000${url}`, {
+        return fetch(`https://practice2023altwolf.onrender.com${url}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -41,8 +41,8 @@
 
       // Function to send GET request
       function getData(url) {
-        return fetch(`http://localhost:3000${url}`).then((response) =>
-          response.json()
+        return fetch(`https://practice2023altwolf.onrender.com${url}`).then(
+          (response) => response.json()
         );
       }
 
